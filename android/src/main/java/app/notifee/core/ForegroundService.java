@@ -20,6 +20,7 @@ package app.notifee.core;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -32,10 +33,8 @@ import app.notifee.core.model.NotificationModel;
 
 public class ForegroundService extends Service {
   private static final String TAG = "ForegroundService";
-  public static final String START_FOREGROUND_SERVICE_ACTION =
-      "app.notifee.core.ForegroundService.START";
-  public static final String STOP_FOREGROUND_SERVICE_ACTION =
-      "app.notifee.core.ForegroundService.STOP";
+  public static final String START_FOREGROUND_SERVICE_ACTION = "app.notifee.core.ForegroundService.START";
+  public static final String STOP_FOREGROUND_SERVICE_ACTION = "app.notifee.core.ForegroundService.STOP";
 
   public static String mCurrentNotificationId = null;
 
@@ -91,17 +90,16 @@ public class ForegroundService extends Service {
 
         if (mCurrentNotificationId == null) {
           mCurrentNotificationId = notificationModel.getId();
-          startForeground(hashCode, notification);
+          startForeground(hashCode, notification, FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
 
           // On headless task complete
-          final MethodCallResult<Void> methodCallResult =
-              (e, aVoid) -> {
-                stopForeground(true);
-                mCurrentNotificationId = null;
-              };
+          final MethodCallResult<Void> methodCallResult = (e, aVoid) -> {
+            stopForeground(true);
+            mCurrentNotificationId = null;
+          };
 
-          ForegroundServiceEvent foregroundServiceEvent =
-              new ForegroundServiceEvent(notificationModel, methodCallResult);
+          ForegroundServiceEvent foregroundServiceEvent = new ForegroundServiceEvent(notificationModel,
+              methodCallResult);
 
           EventBus.post(foregroundServiceEvent);
         } else if (mCurrentNotificationId.equals(notificationModel.getId())) {
@@ -109,7 +107,7 @@ public class ForegroundService extends Service {
               .notify(hashCode, notification);
         } else {
           EventBus.post(
-            new NotificationEvent(NotificationEvent.TYPE_FG_ALREADY_EXIST, notificationModel));
+              new NotificationEvent(NotificationEvent.TYPE_FG_ALREADY_EXIST, notificationModel));
         }
       }
     }
